@@ -6,7 +6,7 @@
 
 //#include <LowPower.h>
 #include <Vcc.h> // from here https://github.com/Yveaux/arduino_vcc
-#define DEBUG
+#define DEBUG  // if uncomment debug will print on serial
 
 const float VccMin   = 0.0;           // Minimum expected Vcc level, in Volts.
 const float VccMax   = 4.2;           // Maximum expected Vcc level, in Volts.
@@ -27,6 +27,7 @@ Servo servoverti;
 int servov = 0; 
 int servovLimitHigh = 160;
 int servovLimitLow = 20;
+
 //Assigning LDRs
 int ldrtopl = 2; //top left LDR green
 int ldrtopr = 1; //top right LDR yellow
@@ -50,6 +51,7 @@ void loop()
 {
   servoh = servohori.read();
   servov = servoverti.read();
+  
   //capturing analog values of each LDR
   int topl = analogRead(ldrtopl);
   int topr = analogRead(ldrtopr);
@@ -58,48 +60,50 @@ void loop()
   float v = vcc.Read_Volts();
   
   #ifdef DEBUG
-  Serial.print("Top Left: ");
-  Serial.println(topl);
-  Serial.print("Top right: ");
-  Serial.println(topr);
-  Serial.print("Bottom Left: ");
-  Serial.println(botl);
-  Serial.print("Bottom Right: ");
-  Serial.println(botr);
-  Serial.print("Voltage: ");
-  Serial.print(v);
-  Serial.println(" Volts");
+      Serial.print("Top Left: ");
+      Serial.println(topl);
+      Serial.print("Top right: ");
+      Serial.println(topr);
+      Serial.print("Bottom Left: ");
+      Serial.println(botl);
+      Serial.print("Bottom Right: ");
+      Serial.println(botr);
+      Serial.print("Voltage: ");
+      Serial.print(v);
+      Serial.println(" Volts");
   #endif
+ 
  // calculating average
   int avgtop = (topl + topr) / 2; //average of top LDRs
   int avgbot = (botl + botr) / 2; //average of bottom LDRs
   int avgleft = (topl + botl) / 2; //average of left LDRs
   int avgright = (topr + botr) / 2; //average of right LDRs
+  
   #ifdef DEBUG
-  Serial.print("Average top: ");
-  Serial.println(avgtop);
-  Serial.print("Average bottom: ");
-  Serial.println(avgbot);
-  Serial.print("Average Left: ");
-  Serial.println(avgleft);
-  Serial.print("Average Right: ");
-  Serial.println(avgright);
+      Serial.print("Average top: ");
+      Serial.println(avgtop);
+      Serial.print("Average bottom: ");
+      Serial.println(avgbot);
+      Serial.print("Average Left: ");
+      Serial.println(avgleft);
+      Serial.print("Average Right: ");
+      Serial.println(avgright);
   #endif
   
 if (avgright == avgleft == avgbot == avgtop)
 {
-//  #ifdef DEBUG
-  Serial.print("ala ");
-  Serial.print(10);
-  Serial.println(" seconds");
-  delay(100); //delay to allow serial to fully print before sleep
-//  #endif
+  #ifdef DEBUG
+      Serial.print("Going to sleep ");
+      Serial.print(10);
+      Serial.println(" seconds");
+      delay(100); //delay to allow serial to fully print before sleep
+  #endif
   Sleepy::loseSomeTime(10000);
 }
   else {
   Serial.println("debug no sleep"); 
   if (avgtop < avgbot)
-  {
+   {
     servoverti.write(servov +1);
     if (servov > servovLimitHigh) 
      { 
@@ -109,33 +113,33 @@ if (avgright == avgleft == avgbot == avgtop)
   }
   else if (avgbot < avgtop)
   {
-    servoverti.write(servov -1);
-    if (servov < servovLimitLow)
-  {
-    servov = servovLimitLow;
-  }
-    delay(10);
+   servoverti.write(servov -1);
+   if (servov < servovLimitLow)
+      {
+      servov = servovLimitLow;
+      }
+   delay(10);
   }
   else 
   {
-    servoverti.write(servov);
+   servoverti.write(servov);
   }
   
   if (avgleft > avgright)
   {
-    servohori.write(servoh +1);
-    if (servoh > servohLimitHigh)
+   servohori.write(servoh +1);
+   if (servoh > servohLimitHigh)
     {
-    servoh = servohLimitHigh;
+      servoh = servohLimitHigh;
     }
-    delay(10);
+   delay(10);
   }
   else if (avgright > avgleft)
   {
     servohori.write(servoh -1);
     if (servoh < servohLimitLow)
      {
-     servoh = servohLimitLow;
+      servoh = servohLimitLow;
      }
     delay(10);
   }
