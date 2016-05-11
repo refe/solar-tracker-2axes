@@ -1,0 +1,156 @@
+// http://www.electronicshub.org/arduino-solar-tracker/
+#include <JeeLib.h> // Low power functions library https://github.com/jcw/jeelib
+#include <Servo.h>
+//defining Servos
+
+//#include <LowPower.h>
+#include <Vcc.h> // from here https://github.com/Yveaux/arduino_vcc
+#define DEBUG
+
+int sleepTime = 50000; //set sleep time in microseconds
+const float VccMin   = 0.0;           // Minimum expected Vcc level, in Volts.
+const float VccMax   = 5.0;           // Maximum expected Vcc level, in Volts.
+const float VccCorrection = 3.98/4.137;  // Measured Vcc by multimeter divided by reported Vcc
+//const float VccCorrection = 1;
+
+Vcc vcc(VccCorrection);
+
+ISR(WDT_vect) { Sleepy::watchdogEvent(); } // Setup the watchdog
+   
+Servo servohori;
+int servoh = 0;
+int servohLimitHigh = 140;
+int servohLimitLow = 40;
+
+Servo servoverti; 
+int servov = 0; 
+int servovLimitHigh = 80;
+int servovLimitLow = 20;
+//Assigning LDRs
+int ldrtopl = 2; //top left LDR green
+int ldrtopr = 1; //top right LDR yellow
+int ldrbotl = 3; // bottom left LDR blue
+int ldrbotr = 0; // bottom right LDR orange
+int volt=6;          //variable to store the values form the analog pin 2  
+
+ void setup () 
+ {
+  Serial.begin(115200);
+  analogReference(DEFAULT);
+  servoh = servohori.read();
+  servov = servoverti.read();
+  servohori.attach(10);
+  servohori.write(90);
+  servoverti.attach(9);
+  servoverti.write(45);
+  delay(500);
+
+ }
+
+void loop()
+{
+  servoh = servohori.read();
+  servov = servoverti.read();
+  //capturing analog values of each LDR
+  
+  int topl = analogRead(ldrtopl);
+  int topr = analogRead(ldrtopr);
+  int botl = analogRead(ldrbotl);
+  int botr = analogRead(ldrbotr);
+  float v = vcc.Read_Volts();
+  
+  #ifdef DEBUG
+  Serial.print("Top Left:     ");
+  Serial.println(topl);
+  Serial.print("Top right:    ");
+  Serial.println(topr);
+  Serial.print("Bottom Left:  ");
+  Serial.println(botl);
+  Serial.print("Bottom Right: ");
+  Serial.println(botr);
+  Serial.print("Voltage: ");
+  Serial.print(v);
+  Serial.println(" Volts");
+  Serial.print("Servo Vert: ");
+  Serial.println(servov);
+  Serial.print("Servo Horiz: ");
+  Serial.println(servoh);
+  #endif
+ // calculating average
+  int avgtop = (topl + topr) / 2; //average of top LDRs
+  int avgbot = (botl + botr) / 2; //average of bottom LDRs
+  int avgleft = (topl + botl) / 2; //average of left LDRs
+  int avgright = (topr + botr) / 2; //average of right LDRs
+  #ifdef DEBUG
+  Serial.print("Average top:    ");
+  Serial.println(avgtop);
+  Serial.print("Average bottom: ");
+  Serial.println(avgbot);
+  Serial.print("Average Left:   ");
+  Serial.println(avgleft);
+  Serial.print("Average Right:  ");
+  Serial.println(avgright);
+  #endif
+
+  if ((avgright == avgleft) && (avgbot == avgtop))
+{
+  //#ifdef DEBUG
+  Serial.print("put to sleep for ");
+  Serial.print(sleepTime / 1000);
+  Serial.println(" seconds");
+  delay(100); //delay to allow serial to fully print before sleep
+  //#endif
+  Sleepy::loseSomeTime(sleepTime);
+}
+  else {
+  //Serial.println("debug no sleep"); 
+  if (avgtop < avgbot)
+  {
+    servoverti.write(servov +1);
+    if (servov > servovLimitHigh) 
+     { 
+      servov = servovLimitHigh;
+     }
+    delay(10);
+  }
+  else if (avgbot < avgtop)
+  {
+    servoverti.write(servov -1);
+    if (servov < servovLimitLow)
+  {
+    servov = servovLimitLow;
+  }
+    delay(10);
+  }
+  else 
+  {
+    servoverti.write(servov);
+  }
+  
+  if (avgleft > avgright)
+  {
+    servohori.write(servoh +1);
+    if (servoh > servohLimitHigh)
+    {
+    servoh = servohLimitHigh;
+    }
+    delay(10);
+  }
+  else if (avgright > avgleft)
+  {
+    servohori.write(servoh -1);
+    if (servoh < servohLimitLow)
+     {
+     servoh = servohLimitLow;
+     }
+    delay(10);
+  }
+
+  else 
+  {
+    servohori.write(servoh);
+  }
+}
+  delay(1000);
+
+}
