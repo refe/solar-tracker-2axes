@@ -94,13 +94,20 @@ void loop()
 
   if ((avgright == avgleft) && (avgbot == avgtop))
 {
-  //#ifdef DEBUG
-  Serial.print("put to sleep for ");
-  Serial.print(sleepTime / 1000);
+  #ifdef DEBUG
+  Serial.print("Delay for ");
+  Serial.print(5);
   Serial.println(" seconds");
   delay(100); //delay to allow serial to fully print before sleep
-  //#endif
-  Sleepy::loseSomeTime(sleepTime);
+  #endif
+  //Sleepy::loseSomeTime(sleepTime);
+  int i;
+  for (i = 0; i <5; i++)
+  { 
+    delay(1000); //in miliseconds  = 1second
+    
+  }
+  
 }
   else {
   //Serial.println("debug no sleep"); 
@@ -151,6 +158,6 @@ void loop()
     servohori.write(servoh);
   }
 }
-  delay(1000);
+  delay(50);
 
 }
